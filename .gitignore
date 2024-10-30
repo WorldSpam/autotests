@@ -1,0 +1,10 @@
+#node
+node_modules
+
+#manual tests
+index.js
+
+#labs
+*.docx
+*.doc
+*.pdf
