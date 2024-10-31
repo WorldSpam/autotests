@@ -1,5 +1,5 @@
 import Matrix from '../src/Matrix.js';
-import { isArray, isInteger, isNumber, isMatrix } from '../src/is.js';
+import { isArray, isInteger, isNumber, isMatrix, isZero } from '../src/is.js';
 import { clone } from '../src/object.js';
 import { arraySize, validate, get, validateIndex } from '../src/array.js';
 import { DimensionError } from '../src/DimensionError.js';
@@ -134,6 +134,32 @@ describe('Is... checks', () => {
     it('isMatrix', () => {
         let matrix = new Matrix();
         expect(isMatrix(matrix)).to.equal(true);
+    })
+    describe('isZero', () => {
+        it('numeric true', () => {
+            let zero = 0;
+            expect(isZero(zero)).to.equal(true);
+        })
+        it('numeric false', () => {
+            let zero = -1;
+            expect(isZero(zero)).to.equal(false);
+        })
+        it('array true', () => {
+            let zero = [0,0,0];
+            expect(isZero(zero)).to.equal(true);
+        })
+        it('array false', () => {
+            let zero = [1,2,3];
+            expect(isZero(zero)).to.equal(false);
+        })
+        it('matrix true', () => {
+            let zero = new Matrix([0,0,0]);
+            expect(isZero(zero)).to.equal(true);
+        })
+        it('matrix false', () => {
+            let zero = new Matrix([1,2,3]);
+            expect(isZero(zero)).to.equal(false);
+        })
     })
 })
 
