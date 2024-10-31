@@ -52,6 +52,34 @@ describe('Matrix creation', () => {
 });
 
 describe('Matrix properties', () => {
+    it('determinant', () => {
+        const matrix = new Matrix([[2,2,3],[4,5,6],[7,8,9]]);
+        expect(matrix.det()).to.equal(-3);
+    })
+    describe('inverse', () => {
+        it('inverse true', () => {
+            let matrix = new Matrix([[3, 1, 4], [2, 4, 5], [8, 0, 1]]);
+            
+            expect(matrix.inv()).to.deep.equal(new Matrix([[ -0.05128205128205128, 0.01282051282051282, 0.14102564102564102 ],
+                [ -0.48717948717948717, 0.3717948717948718, 0.08974358974358973 ],
+                [ 0.41025641025641024, -0.10256410256410256, -0.1282051282051282 ]]));
+        })
+        it('inverse det = 0', () => {
+            let matrix = new Matrix([[1,2,3],[4,5,6],[7,8,9]]);
+            expect(() => matrix.inv()).to.throw(Error,'Cannot calculate inverse, determinant is zero');
+        })
+    })
+    it('rank', () => {
+        let matrix = new Matrix([[1,2,3],[4,5,6],[7,8,9]]);
+        expect(matrix.rank()).to.equal(2);
+    })
+    it('trace', () => {
+        let matrix = new Matrix([[1,2,3],[4,5,6],[7,8,9]]);
+        expect(matrix.trace()).to.equal(15);
+    })
+})
+
+describe('Matrix methods', () => {
     describe('get', () => {
         it('get normal', () => {
             let matrix = new Matrix([[1,2,3],[4,5,6]]);
