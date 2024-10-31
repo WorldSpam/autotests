@@ -1,6 +1,8 @@
 import { isArray, isMatrix, isNumber, isInteger, isZero } from "./is.js";
 import { clone } from "./object.js";
-import { arraySize, validate, get } from "./array.js";
+import { arraySize, validate, get, validateIndex } from "./array.js";
+import {add, subtract, multiply, divide} from "./arithmetic.js";
+import {DimensionError} from "./DimensionError.js";
 
 class Matrix{
     #data;
@@ -49,12 +51,61 @@ class Matrix{
         return this.#size
     }
 
+    /**
+     * Replace an element in the matrix.
+     * @param {number[]} index   
+     * @param {*} value
+     * @return {DenseMatrix} self
+     */
+    set(index, value) {
+        if (!isArray(index)) { throw new TypeError('Array expected') }
+        this.#checkBounds(index)
+        let i, ii, indexI
+        // traverse over the dimensions
+        let data = this.#data
+        for (i = 0, ii = index.length - 1; i < ii; i++) {
+            indexI = index[i]
+            validateIndex(indexI, data.length)
+            data = data[indexI]
+        }
+
+        // set new value
+        indexI = index[index.length - 1]
+        validateIndex(indexI, data.length)
+        data[indexI] = value
+
+        return this
+    }
+
+    /**
+     * Check if given index is out of bounds
+     * @param {Array} array         Array to check 
+     * @param {number[]} index      Array with index in each dimension
+     * @private
+     */
+    #checkBounds(index) {
+        if (index.length !== this.#size.length) {
+            throw new DimensionError(index.length, this.#size.length)
+        }
+        for (let x = 0; x < index.length; x++) {
+            validateIndex(index[x], this.#size[x])
+            if (index[x] >= this.#size[x]) {
+                throw new IndexError(index[x], this.#size[x])
+            }
+        }
+    }
+
     clone() {
         const matrix = new Matrix({
             data: clone(this.#data),
             size: clone(this.#size)
         })
         return matrix
+    }
+
+    toString() {
+        if(this.#size.length === 1) return this.#data.join(',')
+        return this.#data.map(row => row.join(',')).join('\n')
     }
 
     static zeros(row, col) {
@@ -376,6 +427,307 @@ class Matrix{
             throw new RangeError('Matrix must be two dimensional ' +
               '(size: ' + this.#size + ')')
         }
+      }
+
+      /**
+     * Adddition Matrix x Matrix or Matrix x Number
+     * @param {Matrix} a - first matrix
+     * @param {Matrix|Number} b - second matrix or number
+     * @returns {Matrix}
+     */
+    static add(a, b) {
+        if (isMatrix(a) && isMatrix(b)) {
+          return Matrix.#_arithmeticMM(a, b, add)
+        } else if (isMatrix(a) && isNumber(b)) {
+          return Matrix.#_arithmeticMN(a, b, add)
+        } else throw new TypeError('Unsupported type of data ( a: ' + a.constructor.name + ', b: ' + b.constructor.name + ')')
+      }
+  
+      /**
+       * Subtraction Matrix x Matrix or Matrix x Number
+       * @param {Matrix} a - first matrix
+       * @param {Matrix|Number} b - second matrix or number
+       * @returns {Matrix}
+       */
+      static sub(a, b) {
+        if (isMatrix(a) && isMatrix(b)) {
+          return Matrix.#_arithmeticMM(a, b, subtract)
+        }else if (isMatrix(a) && isNumber(b)) {
+          return Matrix.#_arithmeticMN(a, b, subtract)
+        } else throw new TypeError('Unsupported type of data ( a: ' + a.constructor.name + ', b: ' + b.constructor.name + ')')
+      }
+  
+      /**
+       * Multiplication Matrix x Matrix or Matrix x Number
+       * @param {Matrix} a - first matrix
+       * @param {Matrix|Number} b - second matrix or number
+       * @returns {Matrix}
+       */
+      static mul(a, b) {
+        if (isMatrix(a) && isMatrix(b)) {
+          // dimensions
+          const asize = a.size
+          const bsize = b.size
+  
+          // check dimensions
+          Matrix.#_validateMatrixDimensions(asize, bsize)
+          
+          /* unnecessary optimization
+          // process dimensions
+          if (xsize.length === 1) {
+            // process y dimensions
+            if (ysize.length === 1) {
+              // Vector * Vector
+              return _multiplyVectorVector(x, y, xsize[0])
+            }
+            // Vector * Matrix
+            return _multiplyVectorMatrix(x, y)
+          }
+          // process y dimensions
+          if (ysize.length === 1) {
+            // Matrix * Vector
+            return _multiplyMatrixVector(x, y)
+          }*/
+          // Matrix * Matrix
+          return Matrix.#_multiplyMM(a, b)
+          //return Matrix.#_arithmeticMM(a, b, multiply)
+        } else if (isMatrix(a) && isNumber(b)) {
+          return Matrix.#_arithmeticMN(a, b, multiply)
+        } else throw new TypeError('Unsupported type of data ( a: ' + a.constructor.name + ', b: ' + b.constructor.name + ')')
+      }
+  
+      static #_validateMatrixDimensions(size1, size2) {
+        // check left operand dimensions
+      switch (size1.length) {
+        case 1:
+          // check size2
+          switch (size2.length) {
+            case 1:
+              // Vector x Vector
+              if (size1[0] !== size2[0]) {
+                // throw error
+                throw new RangeError('Dimension mismatch in multiplication. Vectors must have the same length')
+              }
+              break
+            case 2:
+              // Vector x Matrix
+              if (size1[0] !== size2[0]) {
+                // throw error
+                throw new RangeError('Dimension mismatch in multiplication. Vector length (' + size1[0] + ') must match Matrix rows (' + size2[0] + ')')
+              }
+              break
+            default:
+              throw new Error('Can only multiply a 1 or 2 dimensional matrix (Matrix B has ' + size2.length + ' dimensions)')
+          }
+          break
+        case 2:
+          // check size2
+          switch (size2.length) {
+            case 1:
+              // Matrix x Vector
+              if (size1[1] !== size2[0]) {
+                // throw error
+                throw new RangeError('Dimension mismatch in multiplication. Matrix columns (' + size1[1] + ') must match Vector length (' + size2[0] + ')')
+              }
+              break
+            case 2:
+              // Matrix x Matrix
+              if (size1[1] !== size2[0]) {
+                // throw error
+                throw new RangeError('Dimension mismatch in multiplication. Matrix A columns (' + size1[1] + ') must match Matrix B rows (' + size2[0] + ')')
+              }
+              break
+            default:
+              throw new Error('Can only multiply a 1 or 2 dimensional matrix (Matrix B has ' + size2.length + ' dimensions)')
+          }
+          break
+        default:
+          throw new Error('Can only multiply a 1 or 2 dimensional matrix (Matrix A has ' + size1.length + ' dimensions)')
+      }
+      }
+    /**
+     * C = A * B
+     * @param {Matrix} a - Matrix (MxN)
+     * @param {Matrix} b - Matrix (NxC)
+     *
+     * @return {Matrix}  - Matrix (MxC)
+     */
+    static #_multiplyMM (a, b) { 
+      
+      const adata = a.#data
+      const asize = a.#size
+      
+      const bdata = b.#data
+      const bsize = b.#size
+      
+      const arows = asize[0]
+      const acolumns = asize[1]
+      const bcolumns = bsize[1]
+  
+       // result
+      const c = []
+  
+      // loop matrix a rows
+      for (let i = 0; i < arows; i++) {
+        // current row
+        const row = adata[i]
+        // initialize row array
+        c[i] = []
+        // loop matrix b columns
+        for (let j = 0; j < bcolumns; j++) {
+          // sum (avoid initializing sum to zero)
+          let sum = multiply(row[0], bdata[0][j])
+          // loop matrix a columns
+          for (let x = 1; x < acolumns; x++) {
+            // multiply & accumulate
+            sum = add(sum, multiply(row[x], bdata[x][j]))
+          }
+          c[i][j] = sum
+        }
+      }
+  
+      // return matrix
+      return new Matrix({
+        data: c,
+        size: [arows, bcolumns],
+      })
+    }
+  
+      /**
+       * Division Matrix x Matrix or Matrix x Number
+       * @param {Matrix} a - first matrix
+       * @param {Matrix|Number} b - second matrix or number
+       * @returns {Matrix}
+       */
+      static div(a, b) {
+        if (isMatrix(a) && isMatrix(b)) {
+          // dimensions
+          const asize = a.size
+          const bsize = b.size
+  
+          // check dimensions
+          Matrix.#_validateMatrixDimensions(asize, bsize)
+          // Matrix * Matrix
+          return Matrix.#_multiplyMM(a, b.inv())
+          //return Matrix.#_arithmeticMM(a, b, multiply)
+        } else if (isMatrix(a) && isNumber(b)) {
+          return Matrix.#_arithmeticMN(a, b, divide)
+        } else throw new TypeError('Unsupported type of data ( a: ' + a.constructor.name + ', b: ' + b.constructor.name + ')')
+      }
+  
+      /**
+       * Boilerplate for iteration through matrixes during arithmetic operations
+       * between two matrixes
+       * @param {Matrix} a - Frist matrix
+       * @param {Matrix} b - second matrix
+       * @param {Function} callback - function to execute [add/substract/-multiply/divide-]
+       * (multiplication and division are supported by Matrix.#_multiplyMM() )
+       * @private
+       */
+      static #_arithmeticMM(a,b,callback){
+        // a arrays
+        const adata = a.#data
+        const asize = a.#size
+        // b arrays
+        const bdata = b.#data
+        const bsize = b.#size
+        // c arrays
+        const csize = []
+  
+        // validate dimensions
+        if (asize.length !== bsize.length) { throw new DimensionError(asize.length, bsize.length) }
+  
+        // validate each one of the dimension sizes
+        for (let i = 0; i < asize.length; i++) {
+          // must match
+          if (asize[i] !== bsize[i]) { throw new RangeError('Dimension mismatch. Matrix A (' + asize + ') must match Matrix B (' + bsize + ')') }
+          // update dimension in c
+          csize[i] = asize[i]
+        }
+  
+        const cdata = csize.length > 0 ? Matrix.#_iterateMM(callback, 0, csize, csize[0], adata, bdata) : []
+  
+        // c matrix
+        return new Matrix({
+          data: cdata,
+          size: csize,
+        })
+      }
+  
+      /**
+       * Recursive iteration for arithmetics between two matrixes
+       * @param {Function} func - function to apply to each element
+       * @param {Number} level - current level in iteration
+       * @param {Number[]} size_arr - array of sizes of each dimension
+       * @param {Number} curr#size - size of current dimension
+       * @param {Number[]} a#data - array of values for first matrix
+       * @param {Number[]} b#data - array of values for second matrix
+       * @returns {Number[]} - resulting array for matrix
+       * @private
+       */
+      static #_iterateMM(func, level, size_arr, curr_size, a_data, b_data) {
+        const c_arr = []
+  
+        // check we reach the last level
+        if (level === size_arr.length - 1) {
+          // loop arrays in last level
+          for (let i = 0; i < curr_size; i++) {
+            // invoke callback and store value
+            c_arr[i] = func(a_data[i], b_data[i])
+          }
+        } else {
+          // iterate current level
+          for (let j = 0; j < curr_size; j++) {
+            // iterate next level
+            c_arr[j] = Matrix.#_iterateMM(func, level + 1, size_arr, size_arr[level + 1], a_data[j], b_data[j])
+          }
+        }
+        return c_arr
+      }
+  
+      /**
+       * Boilerplate for iteration through matrix during arithmetic operations
+       * between two matrixes
+       * @param {Matrix} a - Frist matrix
+       * @param {Number} b - number
+       * @param {Function} callback - function to execute [add/substract/multiply/divide]
+       * @private
+       */
+      static #_arithmeticMN(a, b, callback) {
+        const adata = a.#data
+        const asize = a.#size
+  
+        const cdata = asize.length > 0 ? Matrix.#_iterateMN(callback, 0, asize, asize[0], adata, b) : []
+  
+        return new Matrix({
+          data: cdata,
+          size: clone(asize),
+        })
+      }
+  
+      /**
+       * Recursive iteration for arithmetics between matrix and a number
+       * @param {Function} func - function to apply to each element
+       * @param {Number} level - current level in iteration
+       * @param {Number[]} size_arr - array of sizes of each dimension
+       * @param {Number} curr#size - size of current dimension
+       * @param {Number[]} a#data - array of values for first matrix
+       * @param {Number} b - number
+       * @returns {Number[]} - resulting array for matrix
+       * @private
+       */
+      static #_iterateMN(func, level, size_arr, curr_size, a_data, b) {
+        const c_arr = []
+        if (level === size_arr.length - 1) {
+          for (let i = 0; i < curr_size; i++) {
+            c_arr[i] = func(a_data[i], b)
+          }
+        } else {
+          for (let j = 0; j < curr_size; j++) {
+            c_arr[j] = Matrix.#_iterateMN(func, level + 1, size_arr, size_arr[level + 1], a_data[j], b)
+          }
+        }
+        return c_arr
       }
 
 }
