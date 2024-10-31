@@ -102,6 +102,140 @@ describe('Matrix methods', () => {
             }).to.throw(DimensionError,'Dimension mismatch (2 != 1)');
         })
     })
+
+    describe('set', () => {
+        it('set normal', () => {
+            let matrix = new Matrix([[1,2,3],[4,5,6]]);
+            matrix.set([0,2],10);
+            expect(matrix.get([0,2])).to.equal(10);
+        })
+        it('set throws on wrong index', () => {
+            let matrix = new Matrix([[1,2,3],[4,5,6]]);
+            expect(() => {
+                let value = matrix.set([-1,-1],-1)
+            }).to.throw(IndexError,'Index out of range (-1 < 0)');    
+        })
+        it('set from a single array', () => {
+            let matrix = new Matrix([1,2,3]);
+            matrix.set([0],10);
+            expect(matrix.get([0])).to.equal(10);
+        })
+        it('set with wrong dimensions', () => {
+            let matrix = new Matrix([[1,2,3],[4,5,6]]);
+            expect(() => {
+                let value = matrix.set([0,2,2],10)
+            }).to.throw(DimensionError,'Dimension mismatch (3 != 2)');    
+        })
+    })
+
+    it('toString', () => {
+        let matrix = new Matrix([[1,2,3],[4,5,6]]);
+        expect(matrix.toString()).to.equal('1,2,3\n4,5,6');
+    })
+
+    describe('add', () => {
+        it('add two matrices', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            let matrix2 = new Matrix([[1,2,3],[4,5,6]]);
+            expect(Matrix.add(matrix1,matrix2)).to.deep.equal(new Matrix([[2,4,6],[8,10,12]]));
+        })
+        it('add matrix and number', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            expect(Matrix.add(matrix1,10)).to.deep.equal(new Matrix([[11,12,13],[14,15,16]]));
+        })
+        it('check size error', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            let matrix2 = new Matrix([[1,2],[4,5]]);
+            expect(() => {
+                Matrix.add(matrix1,matrix2)
+            }).to.throw(RangeError, 'Dimension mismatch. Matrix A (2,3) must match Matrix B (2,2)');
+        })
+        it('check type error', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            let bs = 'hello';
+            expect(() => {
+                Matrix.add(matrix1,bs)
+            }).to.throw(TypeError,'Unsupported type of data ( a: Matrix, b: String)');
+        })
+    })
+
+    describe('subtract', () => {
+        it('subtract two matrices', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            let matrix2 = new Matrix([[6,5,9],[23,6,7]]);
+            expect(Matrix.sub(matrix1,matrix2)).to.deep.equal(new Matrix([[-5,-3,-6],[-19,-1,-1]]));
+        })
+        it('subtract matrix and number', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            expect(Matrix.sub(matrix1,10)).to.deep.equal(new Matrix([[-9,-8,-7],[-6,-5,-4]]));
+        })
+        it('check size error', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            let matrix2 = new Matrix([[1,2],[4,5]]);
+            expect(() => {
+                Matrix.sub(matrix1,matrix2)
+            }).to.throw(RangeError, 'Dimension mismatch. Matrix A (2,3) must match Matrix B (2,2)');
+        })
+        it('check type error', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            let matrix2 = 'hello';
+            expect(() => {
+                Matrix.sub(matrix1,matrix2)
+            }).to.throw(TypeError,'Unsupported type of data ( a: Matrix, b: String)');
+        })
+    })
+
+    describe('multiply', () => {
+        it('multiply two matrices', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            let matrix2 = new Matrix([[1,2],[3,4],[5,6]]);
+            expect(Matrix.mul(matrix1,matrix2)).to.deep.equal(new Matrix([[22,28],[49,64],]));
+        })
+        it('multiply matrix and number', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            expect(Matrix.mul(matrix1,10)).to.deep.equal(new Matrix([[10,20,30],[40,50,60]]));
+        })
+        it('multiply matrix on vector', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            let matrix2 = new Matrix([[1],[2],[3]]);
+            expect(Matrix.mul(matrix1,matrix2)).to.deep.equal(new Matrix([[14],[32]]));
+        })
+        it('multiply two vectors', () => {
+            let matrix1 = new Matrix([[1,2,3]]);
+            let matrix2 = new Matrix([[1],[2],[3]]);
+            expect(Matrix.mul(matrix1,matrix2)).to.deep.equal(new Matrix([[14]]));
+        })
+        it('check size error', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            let matrix2 = new Matrix([[1,2],[4,5]]);
+            expect(() => {
+                Matrix.mul(matrix1,matrix2)
+            }).to.throw(RangeError, 'Dimension mismatch in multiplication. Matrix A columns (3) must match Matrix B rows (2)');
+        })
+        it('check type error', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            let matrix2 = 'hello';
+            expect(() => {
+                Matrix.mul(matrix1,matrix2)
+            }).to.throw(TypeError,'Unsupported type of data ( a: Matrix, b: String)');
+        })
+    })
+
+    describe('divide', () => {
+        
+        it('divide two matrices', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            let matrix2 = new Matrix([[1,2,3],[3,4,10],[5,6,9]]);
+            // I hate float precision
+            expect(Matrix.div(matrix1,matrix2)).to.deep.equal(new Matrix([[1.0000000000000002,0,5.551115123125783e-17],[0.4375000000000009,-0.3750000000000002,0.9375000000000002]]));
+        })
+        it('divide matrix and number', () => {
+            let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
+            expect(Matrix.div(matrix1,10)).to.deep.equal(new Matrix([[0.1,0.2,0.3],[0.4,0.5,0.6]]));
+        })
+        //divide vectors is impossible here
+        //errors are already in multiplication
+    })
 })
 
 describe('Matrix static creation methods', () => {
