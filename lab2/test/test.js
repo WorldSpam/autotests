@@ -37,7 +37,17 @@ describe('Matrix creation', () => {
         expect(() => {
             let matrix = new Matrix(1);
         }).to.throw(TypeError);
-
+    })
+    it('Matrix from another matrix', () => {
+        let matrix = new Matrix([[1,2,3],[4,5,6]]);
+        let matrix2 = new Matrix(matrix);
+        expect(matrix2.size).to.deep.equal([2,3]);
+        expect(matrix2.data).to.deep.equal([[1,2,3],[4,5,6]]);
+    })
+    it('Matrix from an object. aka from JSON', () => {
+        let matrix = new Matrix({size:[2,3],data:[[1,2,3],[4,5,6]]});
+        expect(matrix.size).to.deep.equal([2,3]);
+        expect(matrix.data).to.deep.equal([[1,2,3],[4,5,6]]);
     })
 });
 
@@ -63,6 +73,24 @@ describe('Matrix properties', () => {
                 let value = matrix.get([0,2])
             }).to.throw(DimensionError,'Dimension mismatch (2 != 1)');
         })
+    })
+})
+
+describe('Matrix static creation methods', () => {
+    it('identity', () => {
+        let matrix = Matrix.identity(3);
+        expect(matrix._size).to.deep.equal([3,3]);
+        expect(matrix._data).to.deep.equal([[1,0,0],[0,1,0],[0,0,1]]);
+    })
+    it('zeros', () => {
+        let matrix = Matrix.zeros([3,3]);
+        expect(matrix._size).to.deep.equal([3,3]);
+        expect(matrix._data).to.deep.equal([[0,0,0],[0,0,0],[0,0,0]]);
+    })
+    it('ones', () => {
+        let matrix = Matrix.ones([3,3]);
+        expect(matrix._size).to.deep.equal([3,3]);
+        expect(matrix._data).to.deep.equal([[1,1,1],[1,1,1],[1,1,1]]);
     })
 })
 
