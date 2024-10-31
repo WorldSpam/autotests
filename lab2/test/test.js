@@ -1,5 +1,5 @@
 import Matrix from '../src/Matrix.js';
-import { isArray, isInteger, isNumber } from '../src/is.js';
+import { isArray, isInteger, isNumber, isMatrix } from '../src/is.js';
 import { clone } from '../src/object.js';
 import { arraySize, validate, get, validateIndex } from '../src/array.js';
 import { DimensionError } from '../src/DimensionError.js';
@@ -79,18 +79,18 @@ describe('Matrix properties', () => {
 describe('Matrix static creation methods', () => {
     it('identity', () => {
         let matrix = Matrix.identity(3);
-        expect(matrix._size).to.deep.equal([3,3]);
-        expect(matrix._data).to.deep.equal([[1,0,0],[0,1,0],[0,0,1]]);
+        expect(matrix.size).to.deep.equal([3,3]);
+        expect(matrix.data).to.deep.equal([[1,0,0],[0,1,0],[0,0,1]]);
     })
     it('zeros', () => {
         let matrix = Matrix.zeros([3,3]);
-        expect(matrix._size).to.deep.equal([3,3]);
-        expect(matrix._data).to.deep.equal([[0,0,0],[0,0,0],[0,0,0]]);
+        expect(matrix.size).to.deep.equal([3,3]);
+        expect(matrix.data).to.deep.equal([[0,0,0],[0,0,0],[0,0,0]]);
     })
     it('ones', () => {
         let matrix = Matrix.ones([3,3]);
-        expect(matrix._size).to.deep.equal([3,3]);
-        expect(matrix._data).to.deep.equal([[1,1,1],[1,1,1],[1,1,1]]);
+        expect(matrix.size).to.deep.equal([3,3]);
+        expect(matrix.data).to.deep.equal([[1,1,1],[1,1,1],[1,1,1]]);
     })
 })
 
@@ -102,6 +102,10 @@ describe('Is... checks', () => {
     it('isNumber', () => {
         let number = 3;
         expect(isNumber(number)).to.equal(true);
+    })
+    it('isMatrix', () => {
+        let matrix = new Matrix();
+        expect(isMatrix(matrix)).to.equal(true);
     })
 })
 
