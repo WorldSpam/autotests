@@ -133,6 +133,15 @@ describe('Matrix methods', () => {
         expect(matrix.toString()).to.equal('1,2,3\n4,5,6');
     })
 
+    it('transpose', () => {
+        const matrix = new Matrix([[1,2,3],[4,5,6]]);
+        const tmatrix = new Matrix({
+            data: [[1,4],[2,5],[3,6]],
+            size: [3,2]
+        });
+        expect(matrix.transpose()).to.deep.equal(tmatrix);
+    })
+
     describe('add', () => {
         it('add two matrices', () => {
             let matrix1 = new Matrix([[1,2,3],[4,5,6]]);
