@@ -1,4 +1,9 @@
 import Matrix from '../src/Matrix.js';
+import { isArray, isInteger, isNumber } from '../src/is.js';
+import { clone } from '../src/object.js';
+import { arraySize, validate, get, validateIndex } from '../src/array.js';
+import { DimensionError } from '../src/DimensionError.js';
+import { IndexError } from '../src/IndexError.js';
 import { expect } from 'chai';
 
 describe('Matrix creation', () => {
@@ -35,3 +40,127 @@ describe('Matrix creation', () => {
 
     })
 });
+
+describe('Matrix properties', () => {
+    describe('get', () => {
+        it('get normal', () => {
+            let matrix = new Matrix([[1,2,3],[4,5,6]]);
+            expect(matrix.get([0,2])).to.equal(3);    
+        })
+        it('get throws on wrong index', () => {
+            let matrix = new Matrix([[1,2,3],[4,5,6]]);
+            expect(() => {
+                let value = matrix.get([-1,-1])
+            }).to.throw(IndexError,'Index out of range (-1 < 0)');    
+        })
+        it('get from a single array', () => {
+            let matrix = new Matrix([1,2,3]);
+            expect(matrix.get([0])).to.equal(1);
+        })
+        it('get with wrong dimensions', () => {
+            let matrix = new Matrix([1,2,3]);
+            expect(() => {
+                let value = matrix.get([0,2])
+            }).to.throw(DimensionError,'Dimension mismatch (2 != 1)');
+        })
+    })
+})
+
+describe('Is... checks', () => {
+    it('isArray()', () => {
+        let array = [3];
+        expect(isArray(array)).to.equal(true);
+    })
+    it('isNumber', () => {
+        let number = 3;
+        expect(isNumber(number)).to.equal(true);
+    })
+})
+
+describe('Object', () => {
+    it('clone()', () => {
+        let obj = [[1,2,3],[4,5,6]];
+        let cloned = clone(obj);
+        obj[0][0] = 0;
+        expect(cloned).to.deep.equal([[1,2,3],[4,5,6]]);
+    })
+})
+
+describe('array', () => {
+    describe('arraySize()', () => {
+        it('[[1,2,3],[1,2,3]] = [2,3]', () => {
+            let array = [[1,2,3],[1,2,3]];
+            expect(arraySize(array)).to.deep.equal([2,3]);
+        })
+        it('[1,2] = [2]', () => {
+            let array = [1,2];
+            expect(arraySize(array)).to.deep.equal([2]);
+        })
+        it('[1,2,3] = [3]', () => {
+            let array = [1,2,3];
+            expect(arraySize(array)).to.deep.equal([3]);
+        })
+    })
+    describe('validate() array (should throw)', () => {
+        it('validate [1,2,3] with wrong size [1]', () => {
+            let array = [1,2,3];
+            let size = [1];
+            expect(() => {
+                validate(array, size);
+            }).to.throw(DimensionError);
+        })
+        it('validate [1,2,3] with right size [3]', () => {
+            let array = [1,2,3];
+            let size = [3];
+            expect(() => {
+                validate(array, size);
+            }).to.not.throw(DimensionError);
+        })
+        it('validate [[1,2,3],[1,2,3]] with wrong size [2,4]', () => {
+            let array = [[1,2,3],[1,2,3]];
+            let size = [2,4];
+            expect(() => {
+                validate(array, size);
+            }).to.throw(DimensionError);
+        })
+        it('validate [[1,2,3],[1,2,3]] with right size [2,3]', () => {
+            let array = [[1,2,3],[1,2,3]];
+            let size = [2,3];
+            expect(() => {
+                validate(array, size);
+            }).to.not.throw(DimensionError);
+        })
+        it('validate [[1,2,3],[1,2]] (uneven dimensions)', () => {
+            let array = [[1,2,3],[1,2]];
+            let size = [2,3];
+            expect(() => {
+                validate(array, size);
+            }).to.throw(DimensionError);
+        })
+    })
+    it('get()', () => {
+        let arr = [[1,2,3],[4,5,6]];
+        expect(get(arr, [0,2])).to.equal(3);    
+    })
+    it('validateIndex()', () => {
+        expect(() => {
+            validateIndex(0, 3);
+        }).to.not.throw();
+        expect(() => {
+            validateIndex(3, 3);
+        }).to.throw(IndexError);
+    })
+})
+
+describe('Errors', () => {
+    it('DimensionError', () => {
+        expect(() => {
+            throw new DimensionError(3,4);
+        }).to.throw(DimensionError,'Dimension mismatch (3 != 4)');
+    })
+    it('IndexError', () => {
+        expect(() => {
+            throw new IndexError(5,2,4);
+        }).to.throw(IndexError,'Index out of range (5 > 3)');
+    })
+})
