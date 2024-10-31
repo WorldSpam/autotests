@@ -108,6 +108,32 @@ class Matrix{
         return this.#data.map(row => row.join(',')).join('\n')
     }
 
+    transpose() {
+        switch (this.#size.length) {
+            case 1:
+                return this.clone()
+            case 2:
+                let result = []
+                let transRow
+
+                const rows = this.#size[0]
+                const columns = this.#size[1]
+                
+                if (columns === 0) {throw new RangeError('Cannot transpose 2d matrix with no columns. Size: ' + this._size.length)}
+                
+                for (let x = 0; x < columns; x++) {
+                    // initialize row
+                    transRow = result[x] = []
+                    for (let y = 0; y < rows; y++) {
+                        transRow[y] = this.#data[y][x]
+                    }
+                }
+                return new Matrix(result)
+            default:
+                throw new RangeError('Two dimensions maximum. Size: ' + this.#size.length)
+        }
+    }
+
     static zeros(row, col) {
         if(arguments.length === 1) {
             if(isNumber(row)) {
