@@ -5,3 +5,4 @@
 - 2nd lab "Mocha, TDD"
 - 3rd lab "Sinon"
 - 4th lab "Cypress"
+- 5th lab "webdriverio and its demons"
