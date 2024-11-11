@@ -1,7 +1,7 @@
 import { expect, $, driver } from '@wdio/globals';
 import { keyevent } from 'appium-uiautomator2-driver/build/lib/commands/keyboard';
 import { Key } from 'webdriverio'
-driver.k
+
 describe('ApiDemos tests', () => {
     
     beforeEach(async () => {
